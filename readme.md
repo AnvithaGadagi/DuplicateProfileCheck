@@ -39,6 +39,6 @@ Run `flask run` from terminal, Server will be running http://127.0.0.1:5000
     "total_match_score": 3
 }
 
-
 ## Examples:
 Please check `Examples.txt` for more inputs and corresponding outputs
+
