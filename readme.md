@@ -24,6 +24,7 @@ Sample Input 1:
 "profile2":{ "id": 2, "email": "knowkanhai@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "fields":["email","first_name", "last_name", "class_year", "date_of_birth"]
 }
+
 Output:
 {
     "duplicate_profile": true,
@@ -39,12 +40,14 @@ Output:
     "total_match_score": 3
 }
 
+
 Sample Input 2:
 {
 "profile1":{ "id": 1, "email": "knowkanhai@gmail.com", "first_name": "Kanhai", "last_name": "Shah"},
 "profile2":{ "id": 2, "email": "knowkanhai@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "fields":["email","first_name", "last_name", "class_year", "date_of_birth"]
 }
+
 Output
 {
     "duplicate_profile": false,
@@ -61,12 +64,14 @@ Output
     "total_match_score": 1
 }
 
+
 Sample Input 3:
 {
 "profile1":{ "id": 1, "email": "knowkanhai@gmail.com", "first_name": "Kanhai", "last_name": "Shah"},
 "profile2":{ "id": 2, "email": "knowkanhai+donotcompare@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "fields":["first_name", "last_name"]
 }
+
 Output
 {
     "duplicate_profile": false,
@@ -83,12 +88,14 @@ Output
     "total_match_score": 1
 }
 
+
 Sample Input 4:
 {
 "profile1":{ "id": 1, "email": "knowkanhai@gmail.com", "first_name": "Kanhai", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "profile2":{ "id": 2, "email": "knowkanhai+donotcompare@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "fields":["first_name", "last_name","class_year","date_of_birth"]
 }
+
 Output
 {
     "duplicate_profile": true,
