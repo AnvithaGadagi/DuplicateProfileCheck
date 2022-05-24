@@ -19,6 +19,7 @@ Run `flask run` from terminal, Server will be running http://127.0.0.1:5000
 
 ## Input Samples:
 Sample Input 1:
+
 {
 "profile1":{ "id": 1, "email": "knowkanhai@gmail.com", "first_name": "Kanhai", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "profile2":{ "id": 2, "email": "knowkanhai@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
@@ -26,6 +27,7 @@ Sample Input 1:
 }
 
 Output:
+
 {
     "duplicate_profile": true,
     "ignored_attributes": [],
@@ -42,13 +44,15 @@ Output:
 
 
 Sample Input 2:
+
 {
 "profile1":{ "id": 1, "email": "knowkanhai@gmail.com", "first_name": "Kanhai", "last_name": "Shah"},
 "profile2":{ "id": 2, "email": "knowkanhai@gmail.com", "first_name": "Kanhai1", "last_name": "Shah","class_year": 2012, "date_of_birth": "1990-10-11" },
 "fields":["email","first_name", "last_name", "class_year", "date_of_birth"]
 }
 
-Output
+Output:
+
 {
     "duplicate_profile": false,
     "ignored_attributes": [
@@ -72,7 +76,8 @@ Sample Input 3:
 "fields":["first_name", "last_name"]
 }
 
-Output
+Output:
+
 {
     "duplicate_profile": false,
     "ignored_attributes": [
@@ -96,7 +101,8 @@ Sample Input 4:
 "fields":["first_name", "last_name","class_year","date_of_birth"]
 }
 
-Output
+Output:
+
 {
     "duplicate_profile": true,
     "ignored_attributes": [
