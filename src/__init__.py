@@ -1,9 +1,11 @@
 from flask import Flask
 from config import Config
 from flask_mongoengine import MongoEngine
-from flask import Blueprint, request
+from mongoengine import OperationError,ValidationError
+from flask import Blueprint, request, jsonify
 import datetime
 from fuzzywuzzy import fuzz
+import json
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -66,56 +68,67 @@ def check_ratio(profile1, profile2, fields, values, ratio, total_score):
 
 @app.route("/duplicate_check", methods=["GET"])
 def find_duplicates():
-    body = request.json
-    profile1_data = body["profile1"]
-    profile2_data = body["profile2"]
-    fields = body["fields"]
-    profile1 = add_profile(profile1_data)
-    profile2 = add_profile(profile2_data)
+    try:
+        body = request.json
+        profile1_data = body["profile1"]
+        profile2_data = body["profile2"]
+        fields = body["fields"]
+        profile1 = add_profile(profile1_data)
+        profile2 = add_profile(profile2_data)
 
-    total_score = 0
-    matching_attributes = []
-    non_matching_attributes = []
-    ignored_attributes = []
+        total_score = 0
+        matching_attributes = []
+        non_matching_attributes = []
+        ignored_attributes = []
 
-    if "first_name" in fields and "last_name" in fields and "email" in fields:
-        name_email1 = profile1.first_name + profile1.last_name + profile1.email
-        name_email2 = profile2.first_name + profile2.last_name + profile2.email
-        if fuzz.ratio(name_email1,name_email2) > 80:
-            total_score += 1
-            matching_attributes.extend(["first_name","last_name","email"])
+        if "first_name" in fields and "last_name" in fields and "email" in fields:
+            name_email1 = profile1.first_name + profile1.last_name + profile1.email
+            name_email2 = profile2.first_name + profile2.last_name + profile2.email
+            if fuzz.ratio(name_email1,name_email2) > 80:
+                total_score += 1
+                matching_attributes.extend(["first_name","last_name","email"])
+            else:
+                non_matching_attributes.extend(["first_name","last_name","email"])
+        elif "first_name" in fields and "last_name" in fields:
+            ignored_attributes.append("email")
+            name_email1 = profile1.first_name + profile1.last_name
+            name_email2 = profile2.first_name + profile2.last_name
+            if fuzz.ratio(name_email1, name_email2) > 80:
+                total_score += 1
+                matching_attributes.extend(["first_name", "last_name"])
+            else:
+                non_matching_attributes.extend(["first_name", "last_name"])
+        elif "first_name" in fields and "email" in fields:
+            ignored_attributes.append("last_name")
+            name_email1 = profile1.first_name + profile1.email
+            name_email2 = profile2.first_name + profile2.email
+            if fuzz.ratio(name_email1, name_email2) > 80:
+                total_score += 1
+                matching_attributes.extend(["first_name", "email"])
+            else:
+                non_matching_attributes.extend(["first_name", "email"])
+        elif "last_name" in fields and "email" in fields:
+            ignored_attributes.append("first_name")
+            name_email1 = profile1.last_name + profile1.email
+            name_email2 = profile2.last_name + profile2.email
+            if fuzz.ratio(name_email1, name_email2) > 80:
+                total_score += 1
+                matching_attributes.extend(["last_name", "email"])
+            else:
+                non_matching_attributes.extend(["last_name", "email"])
         else:
-            non_matching_attributes.extend(["first_name","last_name","email"])
-    elif "first_name" in fields and "last_name" in fields:
-        ignored_attributes.append("email")
-        name_email1 = profile1.first_name + profile1.last_name
-        name_email2 = profile2.first_name + profile2.last_name
-        if fuzz.ratio(name_email1, name_email2) > 80:
-            total_score += 1
-            matching_attributes.extend(["first_name", "last_name"])
-        else:
-            non_matching_attributes.extend(["first_name", "last_name"])
-    elif "first_name" in fields and "email" in fields:
-        ignored_attributes.append("last_name")
-        name_email1 = profile1.first_name + profile1.email
-        name_email2 = profile2.first_name + profile2.email
-        if fuzz.ratio(name_email1, name_email2) > 80:
-            total_score += 1
-            matching_attributes.extend(["first_name", "email"])
-        else:
-            non_matching_attributes.extend(["first_name", "email"])
-    elif "last_name" in fields and "email" in fields:
-        ignored_attributes.append("first_name")
-        name_email1 = profile1.last_name + profile1.email
-        name_email2 = profile2.last_name + profile2.email
-        if fuzz.ratio(name_email1, name_email2) > 80:
-            total_score += 1
-            matching_attributes.extend(["last_name", "email"])
-        else:
-            non_matching_attributes.extend(["last_name", "email"])
-    else:
-        value_check_list = ["first_name", "last_name", "email"]
-        total_score, is_matching_list = check_ratio(profile1, profile2, fields, value_check_list, 80, total_score)
+            value_check_list = ["first_name", "last_name", "email"]
+            total_score, is_matching_list = check_ratio(profile1, profile2, fields, value_check_list, 80, total_score)
+            for value, is_matching in zip(value_check_list, is_matching_list):
+                if is_matching == -1:
+                    ignored_attributes.append(value)
+                elif is_matching == 1:
+                    matching_attributes.append(value)
+                else:
+                    non_matching_attributes.append(value)
+
+        value_check_list = ["class_year", "date_of_birth"]
+        total_score, is_matching_list = check_field(profile1, profile2, fields, value_check_list, total_score)
         for value, is_matching in zip(value_check_list, is_matching_list):
             if is_matching == -1:
                 ignored_attributes.append(value)
@@ -124,17 +137,11 @@ def find_duplicates():
             else:
                 non_matching_attributes.append(value)
 
-    value_check_list = ["class_year", "date_of_birth"]
-    total_score, is_matching_list = check_field(profile1, profile2, fields, value_check_list, total_score)
-    for value, is_matching in zip(value_check_list, is_matching_list):
-        if is_matching == -1:
-            ignored_attributes.append(value)
-        elif is_matching == 1:
-            matching_attributes.append(value)
+        if total_score > 1:
+            return jsonify({"duplicate_profile": True, "total_match_score": total_score, "matching_attributes": matching_attributes, "non_matching_attributes": non_matching_attributes, "ignored_attributes": ignored_attributes}), 200
         else:
-            non_matching_attributes.append(value)
-
-    if total_score > 1:
-        return {"duplicate_profile": True, "total_match_score": total_score, "matching_attributes": matching_attributes, "non_matching_attributes": non_matching_attributes, "ignored_attributes": ignored_attributes}
-    else:
-        return {"duplicate_profile": False, "total_match_score": total_score, "matching_attributes": matching_attributes, "non_matching_attributes": non_matching_attributes, "ignored_attributes": ignored_attributes}
+            return jsonify({"duplicate_profile": False, "total_match_score": total_score, "matching_attributes": matching_attributes, "non_matching_attributes": non_matching_attributes, "ignored_attributes": ignored_attributes}), 200
+    except (OperationError, ValidationError) as ex:
+        return jsonify({"error_msg": str(ex)}), 400
+    except Exception as ex:
+        return jsonify({"error_msg": ex}), 500
